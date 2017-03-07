@@ -98,10 +98,3 @@ class AntBroadcaster(antclass):
 
             except ant.AntNoDataException:
                 pass
-
-    def five_minutes_120RPM_squarewave_stdpower(self):
-        t0=time.time()
-        while time.time() < (t0 + 60*5):
-            self.broadcastPower(250, 144)
-            self.broadcastPower(270, 144)
-            self.wait_tx()

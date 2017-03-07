@@ -28,23 +28,28 @@ class AutoAntWriter(baseclass):
         self.ants.write(s.replace('\n','\r\n'))
 
     def send_message(self, id, data):
-        m=self.interpret_message(id,data)
-        if m:
-            out="w "+"".join("[%02X]"%ord(x) for x in m.last_message)
-            out+=" # >>> "
+        try:
+            m=self.interpret_message(id,data)
+            if m:
+                out="w "+"".join("[%02X]"%ord(x) for x in m.last_message)
+                out+=" # >>> "
 
-            if m.name=="set_network":
-                print >>self.ants,"w [46][01][__][__][__][__][__][__][__][__] # >>> 'set_network'"
-            elif m.isrepeat:
-                print >>self.ants,out+m.name+" (repeat)"
+                if m.name=="set_network":
+                    print >>self.ants,"w [46][01][__][__][__][__][__][__][__][__] # >>> 'set_network'"
+                elif m.isrepeat:
+                    print >>self.ants,out+m.name+" (repeat)"
+                else:
+                    pad="#"+(" "*(len(out)-6))+"  |> "
+                    print >>self.ants,out+m.pprint(pad)
+                self.last_time=m['dt']
+                print >>self.ants
             else:
-                pad="#"+(" "*(len(out)-6))+"  |> "
-                print >>self.ants,out+m.pprint(pad)
-            self.last_time=m['dt']
-            print >>self.ants
-        else:
-            raise
-        self.ants.flush()
+                raise
+            self.ants.flush()
+        except e:
+            print "Failure interpreting message. Data: " + str(data)
+            print e
+        
         return baseclass.send_message(self,id,data)
 
     def receive_message(self, *args, **kwargs):

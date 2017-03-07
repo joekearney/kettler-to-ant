@@ -10,45 +10,43 @@ import math
 from ant_model import *
 
 if __name__=="__main__":
-    def closeSafely(runners):
-        for r in runners:
-            try:
-                r.ant.close()
-            except Exception as e:
-                print str(e)
+    def min(a, b):
+        if a < b:
+            return a
+        else:
+            return b
 
-    runners = []
-    heart = False
+    def startWatchdog(runner):
+        while True:
+            if runner.died:
+                print "Runner died. Letting it close, then exiting..."
+                sleep(3)
+                print "Exiting now"
+                exit(1)
 
     debug = True
 
     channelNumber = 0
 
-    powerModel = PowerModel()
-    p = PowerRunner(channelNumber, powerModel, debug)
+    p = PowerRunner()
+
+    #startWatchdog(p)
 
     try:
         p.debug = debug
         p.start()
 
-        if len(runners) > 1:
-            print "Only one device is supported. Pick either h or p"
-            exit(1)
-
         while True:
             line = sys.stdin.readline()
             segments = line.split()
 
-            if powerModel:
-                powerModel.power = int(segments[0])
-                powerModel.cadence = int(segments[1])
-                if debug:
-                    print "Updated power model: " + str(powerModel)
-
-            if heart:
-                h.sendHeart(int(segments[0]), time.time())
+            receivedPower = int(segments[0])
+            receivedCadence = int(segments[1])
+            model = PowerModel(receivedPower, receivedCadence)
+            p.updateModel(model)
 
     except KeyboardInterrupt:
+        #traceback.print_stack()
         p.stop()
     finally:
         p.stop()

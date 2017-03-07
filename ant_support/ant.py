@@ -757,6 +757,7 @@ def guess_ant_baudrate(serial_name):
     br={'COM4':115200,
         '/dev/ttyANT':115200,
         '/dev/ttyANT0':115200,
+        '/dev/ttyANT1':115200,
         '/dev/ttyANT2':115200,
         '/dev/ttyANTRCT':115200,
         '/dev/tty.SLAB_USBtoUART':57600,
@@ -778,7 +779,7 @@ def guess_ant_serial_port():
     if os.name == 'nt':
         return open_serial('COM4')
 
-    for serial_name in ['/dev/ttyANT0','/dev/ttyANT2','/dev/ttyANTDEV',
+    for serial_name in ['/dev/ttyANT0','/dev/ttyANT1','/dev/ttyANT2','/dev/ttyANTDEV',
                         '/dev/ttyANTRCT', '/dev/tty.SLAB_USBtoUART',
                         '/dev/cu.ANTUSBStick.slabvcp']:
         try:
