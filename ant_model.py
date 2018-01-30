@@ -28,11 +28,11 @@ class PowerModel():
     def __str__(self):
         return "power[" + str(self.power) + "] cadence[" + str(self.cadence) + "]"
 
-from ant_writer import AntBroadcaster
+from ant_writer import PowerBroadcaster
 
 class PowerRunner():
     def __init__(self, Debug = False):
-        self.ant = AntBroadcaster("power.ants", NetworkKey, Debug)
+        self.ant = PowerBroadcaster("power.ants", NetworkKey, Debug)
         self.powerModel = PowerModel()
         self.running = False
         self.Debug = Debug

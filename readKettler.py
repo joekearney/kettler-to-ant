@@ -46,13 +46,16 @@ class Kettler():
 
     def readModel(self):
         statusLine = self.rpc(self.GET_STATUS)
-        # heartRate cadence speed distanceInFunnyUnits destpower energy timeElapsed realPower
+        # heartRate cadence speed distanceInFunnyUnits destPower energy timeElapsed realPower
         # 000 052 095 000 030 0001 00:12 030
 
         segments = statusLine.split()
         if len(segments) == 8:
             cadence = int(segments[1])
+            destPower = int(segments[4])
             realPower = int(segments[7])
+            if destPower != realPower:
+                print "Difference: destPower: %s  realPower: %s" % (destPower, realPower)
             return PowerModel(realPower, cadence)
         else:
             print "Received bad status string: [%s]" % statusLine
@@ -124,8 +127,8 @@ if __name__=="__main__":
             if model is not None:
                 writer.write(model)
 
-        closeSafely(p.ant)
+        closeSafely(writer.tcpSocket)
         closeSafely(kettler)
     except KeyboardInterrupt:
-        closeSafely(p.ant)
+        closeSafely(writer.tcpSocket)
         closeSafely(kettler)
