@@ -14,7 +14,6 @@ ANT_Capabilities = 0x54
 ANT_Channel_Status = 0x52
 ANT_Channel_ID = 0x51
 
-
 ANT_Request_Message = 0x4d
 ANT_Unassign_Channel = 0x41
 ANT_Assign_Channel = 0x42
@@ -54,24 +53,6 @@ class AntBurstSequenceError(AntException): pass
 class AntTransferRxFailedException(AntException): pass
 class AntChecksumException(AntException): pass
 
-interesting_fields={'crank_torque':'%(power)5.1f w %(cadence)d RPM',
-                    'quarq_strain':'%(hb1)6d Nm/32',
-                    'calibration_pass':'                                            %(calibration_data)4.2f Nm/32',
-                    'calibration_fail':'                                            %(calibration_data)4.2f Nm/32',
-                    'calibration_request':'                                          ((( request )))',
-                    'calibration_request_az':'                                          ((( autozero %(autozero_status)d)))',
-                    'battery_voltage':'%(voltage)4.2f V',
-                    'standard_power':'%(instant_power)04x %(instant_power)5.1fw %(power)5.1fw %(instant_cadence)d RPM %(event_count_accum)3d',
-                    'burst_message':'%(seq)d %(data0)02x %(data1)02x %(data2)02x %(data3)02x %(data4)02x %(data5)02x %(data6)02x %(data7)02x',
-                    'response_no_error':'0x%02x(message_id)' }
-
-
-def print_interesting(m):
-    format=interesting_fields[m.name]
-    #print format,m
-    print format%m
-    sys.stdout.flush()
-
 def load_ant_messages():
     import ant_messages
     try:
@@ -94,7 +75,6 @@ def load_ant_messages():
         messages.messages_keys.append(m)
 
     return messages
-
 
 class Ant:
     def __init__(self, quiet=False, silent=False):
@@ -212,7 +192,7 @@ class Ant:
         self.sp.setTimeout(wait)
 
         try:
-            #print "sp bytes waiting = ", self.sp.inWaiting()
+
             if (None==source): source=self.get_byte
             if (None==dispose): dispose=self.interpret_message
             x=source()
@@ -234,13 +214,10 @@ class Ant:
             if not wait:
                 self.sp.setTimeout(timeout)
 
-
-        #print ["%x"%x for x in [id]+data]
         m = dispose(id,data)
         if self.rssi_logging:
             self.log_rssi(m)
         return m
-
 
     def flush_msg_queue(self):
         while self.sp.inWaiting() > 0:
@@ -289,13 +266,11 @@ class Ant:
                 m=first_message
                 first_message=None
 
-            #print m
-
             if m.name=='event_transfer_rx_failed':
                 raise AntTransferRxFailedException
 
-            #print "sequence",m['seq']
             if (m['seq']&3) != nextseq:
+                print "Error!"
                 print m['seq'], nextseq, m['chan_seq']#, m['data']
                 raise AntBurstSequenceError
 
@@ -316,8 +291,6 @@ class Ant:
         timeout is in seconds, None for forever timeout
         """
 
-        #print "looking for",(",".join([repr(r) for r in responses]))
-
         def check_response(response,message):
 
             name, data = response
@@ -330,33 +303,22 @@ class Ant:
                 if message[k]!=data[k]: return False
             return True
 
-        #print "Timeout =", timeout
         t0=time.time()
         last_unwanted=''
         while (timeout==None) or (time.time()-t0 < timeout):
-            #print "time %4.2f %s\r" % (time.time()-t0, timeout)
-            #print '>',
             m = self.receive_message(wait=timeout)
-            print m
-            if not m: continue #raise
-
-            #if not self.quiet:
-            #    print m
+            if not m: continue
 
             if True in [check_response(r,m) for r in responses]:
-                #print "Wanted message",m.name
-                #print '
                 return m
 
             if m.name==last_unwanted:
-                #print ".",
                 sys.stdout.flush()
             else:
-                if not self.silent:
+                if not self.quiet and not self.silent:
                     print "unwanted message",m,"out of",(",".join([repr(r) for r in responses]))
                 last_unwanted=m.name
 
-        #print "Timeout!"
         raise AntResponseTimeoutException
 
     def get_msgs(self):
@@ -390,7 +352,7 @@ class Ant:
                return True
 
            m = self.receive_message()
-           #print "%20s   %5.1f  %5.1f" % (m.name, time.time()-t0, time.time()-t_last)
+
            if not m.name == 'event_rx_fail':
                t_last=time.time()
 
@@ -422,7 +384,7 @@ class Ant:
         return
 
     def send_acknowledged_data(self, chan, data):
-        #print "\nAck waiting",
+
         #sys.stdout.flush()
         count=0
         while 1:
@@ -525,11 +487,6 @@ class Ant:
 
                     thispack = thispack + [chr(0xff)]*(8-len(thispack))
 
-                    #print "remain",len(data)
-
-                    #print "thispack",thispack
-                    #print "seq",sequence,
-                    #print "count",count
                     try:
                         while not self.sp.getCTS():
                             time.sleep(0.001)
@@ -538,7 +495,6 @@ class Ant:
                     t0=time.time()
                     self.send_message(ANT_Burst_Data,[chan + (sequence<<5)]+thispack)
 
-                    #print "s",sequence,
                     sys.stdout.flush()
                     sequence={0:1,
                               1:2,
@@ -548,10 +504,10 @@ class Ant:
                     if self.sp.inWaiting():
                         def get_byte_and_print():
                             x=self.get_byte()
-                            #print "%02x %d"%(x,self.sp.inWaiting())
+
                             #sys.stdout.flush()
                             return x
-                        #print
+
                         m=self.receive_message(source=get_byte_and_print)
 
                         if not self.quiet:
@@ -580,7 +536,6 @@ class Ant:
                 self.flush_msg_queue()
                 pass
 
-            #print self.wait_for_response([['flash_crc',{'channel':0}]],None)
         print "done"
 
     def get_ant_rev(self):
@@ -606,7 +561,6 @@ class Ant:
         self.send_message(ANT_Request_Message,[channel,ANT_Channel_Status])
         return self.wait_for_response([['channel_status',{'channel':channel}]],10)
 
-
     def get_capabilities(self):
         self.send_message(ANT_Request_Message,[0,ANT_Capabilities])
         return self.wait_for_response([['capabilities',{}],
@@ -622,7 +576,7 @@ class Ant:
     def wait_no_error(self,channel,message_id):
         m = self.wait_for_response([[None, {'channel':channel,
                                             'message_id':message_id}]], 5)
-        #print m
+
         if m.name=='response_no_error':
             return m
         raise AntWrongResponseException, m.name+' for message type '+ant_ids[message_id]
@@ -679,7 +633,6 @@ class Ant:
         self.send_message(ANT_Set_Proximity_Search, [channel,
                                                      level])
         self.wait_no_error(channel,ANT_Set_Proximity_Search)
-
 
     def open_channel(self,channel):
         self.send_message(ANT_Open_Channel, [channel]);
@@ -738,8 +691,6 @@ class Ant:
 
     def interpret_message(self,id,msgdata):
 
-        #print ''.join(['[%02X]'%x for x in [id]+msgdata])
-
         m=self.messages.new_message(''.join([chr(x) for x in [id]+msgdata]))
 
         if m:
@@ -769,7 +720,7 @@ def guess_ant_baudrate(serial_name):
 
 def open_serial(serial_name):
     br=guess_ant_baudrate(serial_name)
-    #print "trying ",serial_name,br
+
     return serial.Serial(serial_name, baudrate=br, rtscts=1)
 
 def guess_ant_serial_port():
@@ -784,10 +735,10 @@ def guess_ant_serial_port():
                         '/dev/cu.ANTUSBStick.slabvcp']:
         try:
             sp = open_serial(serial_name)
-            print 'ANT on %s' % serial_name
+            print 'Opened serial connection with Ant+ device on %s' % serial_name
             return sp
         except fail,e:
-            #traceback.print_exc()
+
             print e
             pass
 
@@ -796,7 +747,6 @@ def guess_ant_serial_port():
     #    return ap2.FakeSerial()
     #except ValueError:
     #    pass
-
 
     raise Exception, "No serial port found"
 
@@ -814,9 +764,7 @@ class SocketProxy:
 
     def read(self,ct):
         result=self.sock.recv(ct)
-        #print >> self.logfd, time.time(),
-        #print >> self.logfd, "rx "," ".join(["%02x"%ord(r) for r in result])
-        #print "rx "," ".join(["%02x"%ord(r) for r in result]),ct
+
         return result
 
     def flushInput(self):
