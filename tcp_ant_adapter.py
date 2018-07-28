@@ -1,15 +1,7 @@
 #!/usr/bin/python
 
-import os
-import sys
-import time
-
-import time
-import math
 import traceback
 import threading
-
-from threading import Thread
 
 from ant_writer import *
 from ant_model import *
@@ -24,20 +16,15 @@ ANT_PLUS_NETWORK_KEY_STRING = os.getenv('ANT_PLUS_NETWORK_KEY', "00 00 00 00 00 
 ANT_PLUS_NETWORK_KEY = [int(i, 16) for i in ANT_PLUS_NETWORK_KEY_STRING.split()]
 if sum(ANT_PLUS_NETWORK_KEY) == 0:
     print "Environment variable ANT_PLUS_NETWORK_KEY must be set as space separated hex pairs"
-    print "The standard Ant+ network key can be obtained from here: https://www.thisisant.com/developer/ant-plus/ant-plus-basics/network-keys"
+    print "The standard Ant+ network key can be obtained from here: " \
+          "https://www.thisisant.com/developer/ant-plus/ant-plus-basics/network-keys"
     print "Example: '00 01 02 03 04 05 06 07'"
     exit(1)
 elif DEBUG:
     print "Found Ant+ network key: %s" % ANT_PLUS_NETWORK_KEY_STRING
 
-if __name__=="__main__":
-    def min(a, b):
-        if a < b:
-            return a
-        else:
-            return b
-
-    def quitOnProblem(reason, antWriter):
+if __name__ == "__main__":
+    def quit_on_problem(reason, antWriter):
         print "WATCHDOG QUIT TRIGGERED because ANT+ writer thread %s. Letting it close, then exiting..." % reason
         antWriter.stop()
         print "Closing stdin"
@@ -46,8 +33,10 @@ if __name__=="__main__":
         printStackTraces()
         print "Watchdog is done"
 
+
     def currentTimeMillis():
         return int(round(time.time() * 1000))
+
 
     def printStackTraces():
         print >> sys.stderr, "\n*** STACKTRACE - START ***\n"
@@ -58,13 +47,14 @@ if __name__=="__main__":
             code.append("\n# Thread: id[%s] name[%s] daemon[%s]" % (threadId, thread.name, thread.daemon))
             for filename, lineno, name, line in traceback.extract_stack(stack):
                 code.append('  File: "%s", line %d, in %s' % (filename,
-                                                            lineno, name))
+                                                              lineno, name))
                 if line:
                     code.append("    %s" % (line.strip()))
 
         for line in code:
             print >> sys.stderr, line
         print >> sys.stderr, "\n*** STACKTRACE - END ***\n"
+
 
     def runWatchdog(antWriter):
         watchdogRunning = True
@@ -73,7 +63,7 @@ if __name__=="__main__":
 
             if antWriter.died:
                 watchdogRunning = False
-                quitOnProblem("died", antWriter)
+                quit_on_problem("died", antWriter)
 
             if not antWriter.running:
                 watchdogRunning = False
@@ -82,7 +72,8 @@ if __name__=="__main__":
             millisSinceLastUpdate = (currentTimeMillis() - antWriter.lastUpdate)
             if millisSinceLastUpdate > MAX_TIME_BETWEEN_UPDATES:
                 watchdogRunning = False
-                quitOnProblem("made no progress for %sms" % millisSinceLastUpdate, antWriter)
+                quit_on_problem("made no progress for %sms" % millisSinceLastUpdate, antWriter)
+
 
     def readFromStdin(antWriter, debug):
         try:
@@ -109,7 +100,8 @@ if __name__=="__main__":
                     print "[%s] Received bad line with [%s] characters: %s" % (badLinesReceived, len(line), line)
 
                 if badLinesReceived >= MAX_CONSECUTIVE_BAD_LINES or emptyLinesReceived >= MAX_CONSECUTIVE_EMPTY_LINES:
-                    print "Received [%s] bad and [%s] empty consecutive lines, and interpreting that as a QUIT" % (badLinesReceived, emptyLinesReceived)
+                    print "Received [%s] bad and [%s] empty consecutive lines, and interpreting that as a QUIT" % (
+                        badLinesReceived, emptyLinesReceived)
                     sys.stdin.close()
                     break
 
@@ -124,17 +116,17 @@ if __name__=="__main__":
 
     def runMain(antWriter):
         # this thread reads from the in-memory power model and writes to Ant+
-        antWriteThread = Thread(target = antWriter.start, args = [])
+        antWriteThread = Thread(target=antWriter.start, args=[])
         antWriteThread.setDaemon(True)
         antWriteThread.setName("ant-write")
 
         # this thread watches that progress continues to be made
-        watchdogThread = Thread(target = runWatchdog, args = (antWriter, ))
+        watchdogThread = Thread(target=runWatchdog, args=(antWriter,))
         watchdogThread.setDaemon(True)
         watchdogThread.setName("watchdog")
 
         # this thread reads input from stdin and pushes it into the power model
-        inputThread = Thread(target = readFromStdin, args = (antWriter, DEBUG, ))
+        inputThread = Thread(target=readFromStdin, args=(antWriter, DEBUG,))
         inputThread.setDaemon(True)
         inputThread.setName("stdin-read")
 
@@ -145,11 +137,12 @@ if __name__=="__main__":
 
         watchdogThread.join()
 
+
     antWriter = None
     try:
-        antWriter = PowerWriter(transmitIntervalMillis = TRANSMIT_INTERVAL_MILLIS,
-                             networkKey = ANT_PLUS_NETWORK_KEY,
-                             debug = DEBUG)
+        antWriter = PowerWriter(transmitIntervalMillis=TRANSMIT_INTERVAL_MILLIS,
+                                networkKey=ANT_PLUS_NETWORK_KEY,
+                                debug=DEBUG)
 
         runMain(antWriter)
     except Exception as e:
