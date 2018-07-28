@@ -1,17 +1,13 @@
 #!/usr/bin/python
 
-import os
-import sys
 import time
 
-from ant_support import ant
-import time
-import math
-
-from threading import Thread
 from time import sleep
 
-from ant_model import *
+from components.ant import PowerModel
+
+from ant_broadcaster import PowerBroadcaster
+
 
 def checkRange(min, value, max):
     if value < 0:
@@ -21,14 +17,14 @@ def checkRange(min, value, max):
     else:
         return value
 
+
 def currentTimeMillis():
     return int(round(time.time() * 1000))
 
-from ant_broadcaster import PowerBroadcaster
 
 class PowerWriter():
-    def __init__(self, transmitIntervalMillis, networkKey, debug = False):
-        self.ant = PowerBroadcaster("power.ants", networkKey, debug)
+    def __init__(self, transmitIntervalMillis, networkKey, debug=False):
+        self.ant = PowerBroadcaster(networkKey, debug)
         self.debug = debug
         self.transmitIntervalSecs = transmitIntervalMillis / 1000.0
         self.powerModel = PowerModel()
@@ -36,7 +32,8 @@ class PowerWriter():
         self.died = False
         self.__markProgress()
         if self.debug:
-            print "Set up PowerWriter with transmitIntervalSecs[%s] deviceId[%s]" % (self.transmitIntervalSecs, self.ant.deviceId)
+            print "Set up PowerWriter with transmitIntervalSecs[%s] deviceId[%s]" % (
+                self.transmitIntervalSecs, self.ant.deviceId)
 
     def __markProgress(self):
         self.lastUpdate = currentTimeMillis()
@@ -60,7 +57,7 @@ class PowerWriter():
             self.ant.close()
 
     def updateModel(self, model):
-        self.powerModel.power   = checkRange(0, model.power,  2048)
+        self.powerModel.power = checkRange(0, model.power, 2048)
         self.powerModel.cadence = checkRange(0, model.cadence, 255)
 
     def start(self):

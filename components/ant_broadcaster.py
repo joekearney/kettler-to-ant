@@ -67,7 +67,7 @@ class AntBroadcaster(ant.Ant):
 
 
 class PowerBroadcaster(AntBroadcaster):
-    def __init__(self, filename, network_key, Debug):
+    def __init__(self, network_key, Debug):
         AntBroadcaster.__init__(self, network_key, Debug, device_type=ANT_DEVICE_TYPE_POWER)
         self.Debug = Debug
         self.power_accum = 0
