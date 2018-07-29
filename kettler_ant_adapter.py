@@ -133,6 +133,8 @@ def readFromStdin(antWriter, debug):
 
 
 def runMain(antWriter, kettler):
+    print "Creating worker threads"
+
     # this thread reads from the in-memory power model and writes to Ant+
     antWriteThread = Thread(target=antWriter.start, args=[])
     antWriteThread.setDaemon(True)
@@ -165,11 +167,14 @@ def runMain(antWriter, kettler):
 if __name__ == "__main__":
     antWriter = None
     try:
+        print "Creating Ant writer..."
         antWriter = PowerWriter(transmitIntervalMillis=TRANSMIT_INTERVAL_MILLIS,
                                 networkKey=ANT_PLUS_NETWORK_KEY,
                                 debug=DEBUG)
 
+        print "Creating Kettler interface..."
         kettler = kettler_serial.find_kettler_usb(DEBUG)
+        print "Found Kettler at [%s]" % kettler.getId()
 
         runMain(antWriter, kettler)
     except KeyboardInterrupt:
