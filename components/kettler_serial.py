@@ -33,7 +33,7 @@ def find_kettler_bluetooth(debug):
     raise Exception("No serial port found")
 
 
-def find_kettler_usb(debug):
+def find_kettler_usb(debug, fallback_to_fake=False):
     "returns a Kettler instance for the first Kettler serial port found that replies to ID and ST"
 
     print "Looking for serial ports for a Kettler device..."
@@ -61,7 +61,10 @@ def find_kettler_usb(debug):
             print e
             pass
 
-    raise Exception("No serial port found")
+    if fallback_to_fake:
+        return FakeKettler()
+    else:
+        raise Exception("No serial port found")
 
 
 def close_safely(thing):
@@ -106,3 +109,14 @@ class Kettler():
 
     def close(self):
         close_safely(self.serial_port)
+
+
+class FakeKettler():
+    def getId(self):
+        return "fake-kettler"
+
+    def readModel(self):
+        return PowerModel(1234, 12)
+
+    def close(self):
+        return True

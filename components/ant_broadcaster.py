@@ -16,6 +16,20 @@ ANT_FITNESS_EQUIPMENT_PROFILE_TRAINER_DATA_PAGE = 0x19
 ANT_FITNESS_EQUIPMENT_PROFILE_TARGET_POWER_PAGE = 0x31  # head unit -> device
 
 
+class FakeAntBroadcaster():
+    def __init__(self):
+        self.deviceId = 1
+
+    def close(self):
+        print "Closing broadcaster"
+
+    def wait_tx(self):
+        pass
+
+    def send_broadcast_data(self, chan, data):
+        print "Sending chan[%s] data[%s]" % (chan, ' '.join(str(x) for x in data))
+
+
 class AntBroadcaster(ant.Ant):
     def __init__(self, network_key, debug, device_type):
         ant.Ant.__init__(self, quiet=not debug, silent=False)
@@ -66,9 +80,10 @@ class AntBroadcaster(ant.Ant):
                 pass
 
 
-class PowerBroadcaster(AntBroadcaster):
-    def __init__(self, network_key, Debug):
-        AntBroadcaster.__init__(self, network_key, Debug, device_type=ANT_DEVICE_TYPE_POWER)
+class PowerBroadcaster():
+    def __init__(self, ant_broadcaster, Debug):
+        self.ant_broadcaster = ant_broadcaster
+        self.deviceId = ant_broadcaster.deviceId
         self.Debug = Debug
         self.power_accum = 0
         self.event_counter = 0
@@ -95,10 +110,13 @@ class PowerBroadcaster(AntBroadcaster):
         if self.Debug or (power != self.lastPowerUpdate) or (cadence != self.lastCadenceUpdate):
             print "Sending data for device[%s]: %40s for power[%s] cadence[%s]" % (
                 self.deviceId, str(data), power, cadence)
-        self.send_broadcast_data(0, data)
+        self.ant_broadcaster.send_broadcast_data(0, data)
         self.lastPowerUpdate = power
         self.lastCadenceUpdate = cadence
-        self.wait_tx()
+        self.ant_broadcaster.wait_tx()
+
+    def close(self):
+        self.ant_broadcaster.close()
 
 
 class FitnessEquipmentBroadcaster(AntBroadcaster):

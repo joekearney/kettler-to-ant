@@ -6,7 +6,7 @@ from time import sleep
 
 from components.ant import PowerModel
 
-from ant_broadcaster import PowerBroadcaster
+from ant_broadcaster import PowerBroadcaster, ANT_DEVICE_TYPE_POWER, AntBroadcaster, FakeAntBroadcaster
 
 
 def checkRange(min, value, max):
@@ -23,10 +23,12 @@ def currentTimeMillis():
 
 
 class PowerWriter():
-    def __init__(self, transmitIntervalMillis, networkKey, debug=False):
-        self.ant = PowerBroadcaster(networkKey, debug)
+    def __init__(self, transmit_interval_millis, network_key, debug=False, fallback_to_fake=False):
+        broadcaster = self.create_broadcaster(network_key, debug, fallback_to_fake)
+
+        self.ant = PowerBroadcaster(broadcaster, debug)
         self.debug = debug
-        self.transmitIntervalSecs = transmitIntervalMillis / 1000.0
+        self.transmitIntervalSecs = transmit_interval_millis / 1000.0
         self.powerModel = PowerModel()
         self.running = False
         self.died = False
@@ -34,6 +36,18 @@ class PowerWriter():
         if self.debug:
             print "Set up PowerWriter with transmitIntervalSecs[%s] deviceId[%s]" % (
                 self.transmitIntervalSecs, self.ant.deviceId)
+
+    def create_broadcaster(self, network_key, debug, fallback_to_fake):
+        try:
+            return AntBroadcaster(network_key, debug, device_type=ANT_DEVICE_TYPE_POWER)
+        except Exception as e:
+            print "Failed to create real Ant Broadcaster"
+            print e
+            if fallback_to_fake:
+                return FakeAntBroadcaster()
+            else:
+                raise e
+
 
     def __markProgress(self):
         self.lastUpdate = currentTimeMillis()

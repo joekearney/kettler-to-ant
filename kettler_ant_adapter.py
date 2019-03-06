@@ -168,12 +168,13 @@ if __name__ == "__main__":
     antWriter = None
     try:
         print "Creating Ant writer..."
-        antWriter = PowerWriter(transmitIntervalMillis=TRANSMIT_INTERVAL_MILLIS,
-                                networkKey=ANT_PLUS_NETWORK_KEY,
-                                debug=DEBUG)
+        antWriter = PowerWriter(transmit_interval_millis=TRANSMIT_INTERVAL_MILLIS,
+                                network_key=ANT_PLUS_NETWORK_KEY,
+                                debug=DEBUG,
+                                fallback_to_fake=True)
 
         print "Creating Kettler interface..."
-        kettler = kettler_serial.find_kettler_usb(DEBUG)
+        kettler = kettler_serial.find_kettler_usb(DEBUG, fallback_to_fake=True)
         print "Found Kettler at [%s]" % kettler.getId()
 
         runMain(antWriter, kettler)
