@@ -33,7 +33,7 @@ class AntBroadcaster(ant.Ant):
         self.set_network_key(network=ANT_NETWORK, key=network_key)
 
         self.deviceId = 12329 + device_type
-        print "Initialised broadcaster for deviceId[%s] of type[%s]" % (self.deviceId, device_type)
+        print("Initialised broadcaster for deviceId[%s] of type[%s]" % (self.deviceId, device_type))
 
         self.set_channel_id(channel=0,
                             device=self.deviceId,
@@ -58,7 +58,7 @@ class AntBroadcaster(ant.Ant):
                     continue
 
                 if resp.name == 'calibration_request':
-                    print "Ignoring request for calibration"
+                    print("Ignoring request for calibration")
                 if resp.name == 'event_tx':
                     return
 
@@ -93,8 +93,8 @@ class PowerBroadcaster(AntBroadcaster):
         self.event_counter = (self.event_counter + 1) % 0xff
 
         if self.Debug or (power != self.lastPowerUpdate) or (cadence != self.lastCadenceUpdate):
-            print "Sending data for device[%s]: %40s for power[%s] cadence[%s]" % (
-                self.deviceId, str(data), power, cadence)
+            print("Sending data for device[%s]: %40s for power[%s] cadence[%s]" % (
+                self.deviceId, str(data), power, cadence))
         self.send_broadcast_data(0, data)
         self.lastPowerUpdate = power
         self.lastCadenceUpdate = cadence
@@ -149,6 +149,6 @@ class FitnessEquipmentBroadcaster(AntBroadcaster):
 
         self.event_counter = (self.event_counter + 1) % 0xff
 
-        print "sending standard data: " + str(data)
+        print("sending standard data: " + str(data))
         self.send_broadcast_data(0, data)
         self.wait_tx()

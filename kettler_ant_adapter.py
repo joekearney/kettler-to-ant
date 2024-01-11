@@ -19,21 +19,21 @@ DEBUG = False
 ANT_PLUS_NETWORK_KEY_STRING = os.getenv('ANT_PLUS_NETWORK_KEY', "00 00 00 00 00 00 00 00")
 ANT_PLUS_NETWORK_KEY = [int(i, 16) for i in ANT_PLUS_NETWORK_KEY_STRING.split()]
 if sum(ANT_PLUS_NETWORK_KEY) == 0:
-    print "Environment variable ANT_PLUS_NETWORK_KEY must be set as space separated hex pairs"
-    print "The standard Ant+ network key can be obtained from here: " \
-          "https://www.thisisant.com/developer/ant-plus/ant-plus-basics/network-keys"
-    print "Example: '00 01 02 03 04 05 06 07'"
+    print("Environment variable ANT_PLUS_NETWORK_KEY must be set as space separated hex pairs")
+    print("The standard Ant+ network key can be obtained from here: "
+          "https://www.thisisant.com/developer/ant-plus/ant-plus-basics/network-keys")
+    print("Example: '00 01 02 03 04 05 06 07'")
     exit(1)
 elif DEBUG:
-    print "Found Ant+ network key: %s" % ANT_PLUS_NETWORK_KEY_STRING
+    print("Found Ant+ network key: %s" % ANT_PLUS_NETWORK_KEY_STRING)
 
 
 def quit_on_problem(reason, antWriter):
-    print "WATCHDOG QUIT TRIGGERED because ANT+ writer thread %s. Letting it close, then exiting..." % reason
+    print("WATCHDOG QUIT TRIGGERED because ANT+ writer thread %s. Letting it close, then exiting..." % reason)
     antWriter.stop()
     sleep(1)
     printStackTraces()
-    print "Watchdog is done"
+    print("Watchdog is done")
 
 
 def currentTimeMillis():
@@ -89,7 +89,7 @@ def detectInterrupt(antWriter):
         while True:
             sys.stdin.readline()
     except KeyboardInterrupt:
-        print "Detected Ctrl-C, quitting"
+        print("Detected Ctrl-C, quitting")
         antWriter.stop()
 
 
@@ -112,28 +112,28 @@ def readFromStdin(antWriter, debug):
             elif len(line) == 0:
                 emptyLinesReceived += 1
                 if debug:
-                    print "Received empty line, ignoring"
+                    print("Received empty line, ignoring")
             else:
                 badLinesReceived += 1
-                print "[%s] Received bad line with [%s] characters: %s" % (badLinesReceived, len(line), line)
+                print("[%s] Received bad line with [%s] characters: %s" % (badLinesReceived, len(line), line))
 
             if badLinesReceived >= MAX_CONSECUTIVE_BAD_LINES or emptyLinesReceived >= MAX_CONSECUTIVE_EMPTY_LINES:
-                print "Received [%s] bad and [%s] empty consecutive lines, and interpreting that as a QUIT" % (
-                    badLinesReceived, emptyLinesReceived)
+                print("Received [%s] bad and [%s] empty consecutive lines, and interpreting that as a QUIT" % (
+                    badLinesReceived, emptyLinesReceived))
                 sys.stdin.close()
                 break
 
     except KeyboardInterrupt:
         antWriter.stop()
     except Exception as e:
-        print "Failed with exception: %s" % str(e)
+        print("Failed with exception: %s" % str(e))
         antWriter.stop()
     finally:
         antWriter.stop()
 
 
 def runMain(antWriter, kettler):
-    print "Creating worker threads"
+    print("Creating worker threads")
 
     # this thread reads from the in-memory power model and writes to Ant+
     antWriteThread = Thread(target=antWriter.start, args=[])
@@ -167,21 +167,21 @@ def runMain(antWriter, kettler):
 if __name__ == "__main__":
     antWriter = None
     try:
-        print "Creating Ant writer..."
+        print("Creating Ant writer...")
         antWriter = PowerWriter(transmitIntervalMillis=TRANSMIT_INTERVAL_MILLIS,
                                 networkKey=ANT_PLUS_NETWORK_KEY,
                                 debug=DEBUG)
 
-        print "Creating Kettler interface..."
+        print("Creating Kettler interface...")
         kettler = kettler_serial.find_kettler_usb(DEBUG)
-        print "Found Kettler at [%s]" % kettler.getId()
+        print("Found Kettler at [%s]" % kettler.getId())
 
         runMain(antWriter, kettler)
     except KeyboardInterrupt:
         if antWriter:
             antWriter.stop()
     except Exception as e:
-        print "Failed with exception: %s" % str(e)
+        print("Failed with exception: %s" % str(e))
         if antWriter:
             antWriter.stop()
         raise e
@@ -190,5 +190,5 @@ if __name__ == "__main__":
             antWriter.stop()
 
     if DEBUG:
-        print "Finished main"
+        print("Finished main")
         printStackTraces()

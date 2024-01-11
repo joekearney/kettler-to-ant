@@ -10,8 +10,8 @@ from ant_broadcaster import PowerBroadcaster
 
 
 def checkRange(min, value, max):
-    if value < 0:
-        return 0
+    if value < min:
+        return min
     elif value > max:
         return max
     else:
@@ -22,7 +22,7 @@ def currentTimeMillis():
     return int(round(time.time() * 1000))
 
 
-class PowerWriter():
+class PowerWriter:
     def __init__(self, transmitIntervalMillis, networkKey, debug=False):
         self.ant = PowerBroadcaster(networkKey, debug)
         self.debug = debug
@@ -32,8 +32,8 @@ class PowerWriter():
         self.died = False
         self.__markProgress()
         if self.debug:
-            print "Set up PowerWriter with transmitIntervalSecs[%s] deviceId[%s]" % (
-                self.transmitIntervalSecs, self.ant.deviceId)
+            print("Set up PowerWriter with transmitIntervalSecs[%s] deviceId[%s]" % (
+                self.transmitIntervalSecs, self.ant.deviceId))
 
     def __markProgress(self):
         self.lastUpdate = currentTimeMillis()
@@ -42,7 +42,7 @@ class PowerWriter():
         self.ant.broadcastPower(power, cadence)
 
     def __sendInLoop(self):
-        print "Starting Ant+ writing loop..."
+        print("Starting Ant+ writing loop...")
         try:
             while self.running:
                 self.__sendPower(self.powerModel.power, self.powerModel.cadence)
@@ -50,10 +50,10 @@ class PowerWriter():
                 sleep(self.transmitIntervalSecs)
         except Exception as e:
             self.died = True
-            print "Failed with exception: %s" % str(e)
+            print("Failed with exception: %s" % str(e))
         finally:
             if self.debug:
-                print "Closing send loop"
+                print("Closing send loop")
             self.ant.close()
 
     def updateModel(self, model):
